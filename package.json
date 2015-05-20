@@ -1,0 +1,28 @@
+{
+  "name": "srv-client",
+  "version": "0.0.1",
+  "description": "SRV DNS client to get ip/port information from skydns.",
+  "main": "srv.js",
+  "directories": {
+    "test": "tests"
+  },
+  "devDependencies": {
+    "nodeunit": "0.9.0"
+  },
+  "scripts": {
+    "test": "nodeunit tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fastest963/node-srv-client.git"
+  },
+  "keywords": [
+    "dns",
+    "srv",
+    "client",
+    "skydns"
+  ],
+  "author": "James Hartig <fastest963@gmail.com>",
+  "license": "MIT",
+  "readmeFilename": "README.md"
+}
