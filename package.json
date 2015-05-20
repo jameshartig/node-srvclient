@@ -1,6 +1,6 @@
 {
-  "name": "srv-client",
-  "version": "0.0.1",
+  "name": "srvclient",
+  "version": "0.0.2",
   "description": "SRV DNS client to get ip/port information from skydns.",
   "main": "srv.js",
   "directories": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/fastest963/node-srv-client.git"
+    "url": "git://github.com/fastest963/node-srvclient.git"
   },
   "keywords": [
     "dns",
