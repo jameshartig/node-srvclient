@@ -1,11 +1,11 @@
-# srv-client #
+# srvclient #
 
 A simple library for getting SRV DNS targets from something like SkyDNS.
 
 ### Usage ###
 
 ```JS
-var srv = require('srv-client');
+var srv = require('srvclient');
 ```
 
 ## Methods ##
