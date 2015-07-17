@@ -1,6 +1,6 @@
 {
   "name": "srvclient",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "SRV DNS client to get ip/port information from skydns.",
   "main": "srv.js",
   "directories": {
