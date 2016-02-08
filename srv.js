@@ -1,4 +1,5 @@
 var dns = require('dns'),
+    net = require('net'),
     cachedRecords = {},
     nextGarbageCollection = 0,
     currentCollectionTimeout = null;
@@ -180,8 +181,8 @@ SRVTarget.prototype.lookup = function(cb) {
             return;
         }
         this.address = address;
-        //todo: detect the addressFamily
-        cb(null, address)
+        this.addressFamily = net.isIP(address);
+        cb(null, address);
     }.bind(this));
 };
 
