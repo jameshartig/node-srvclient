@@ -1,6 +1,6 @@
 {
   "name": "srvclient",
-  "version": "0.0.3",
+  "version": "0.0.4-beta",
   "description": "SRV DNS client to get ip/port information from skydns.",
   "main": "srv.js",
   "directories": {
@@ -24,5 +24,9 @@
   ],
   "author": "James Hartig <fastest963@gmail.com>",
   "license": "MIT",
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "modulelog": "^0.2.2",
+    "native-dns": "^0.7.0"
+  }
 }

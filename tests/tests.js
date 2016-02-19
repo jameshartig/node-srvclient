@@ -1,7 +1,6 @@
-var dns = require('dns'),
+var dns = require('native-dns'),
     SRVClient = require('../srv.js'),
     testHostname = '_srv-client-test._tcp.mysuperfancyapi.com',
-    testHostname2 = '_srv-client-test2._tcp.mysuperfancyapi.com',
     dnsServers = ['8.8.8.8', '8.8.4.4'];
 
 exports.setServers = function(test) {
@@ -128,4 +127,24 @@ exports.resolve46NotCache = function(test) {
             test.done();
         });
     });
+};
+
+exports.fallback = function(test) {
+    test.expect(1);
+    SRVClient.setServers(['10.254.254.6'].concat(dnsServers));
+    SRVClient.getTarget(testHostname, function(err, target) {
+        test.equal(target.port, 8079);
+        test.done();
+    });
+    SRVClient.setServers(dnsServers);
+};
+
+exports.timeout = function(test) {
+    test.expect(1);
+    SRVClient.setServers(['10.254.254.6']);
+    SRVClient.getTarget(testHostname, function(err, target) {
+        test.equal(target, null);
+        test.done();
+    });
+    SRVClient.setServers(dnsServers);
 };

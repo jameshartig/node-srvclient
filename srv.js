@@ -1,9 +1,26 @@
-var dns = require('dns'),
+var dns = require('native-dns'),
     net = require('net'),
+    Log = require('modulelog')('srvclient'),
     cachedRecords = {},
     nextGarbageCollection = 0,
-    currentCollectionTimeout = null;
+    currentCollectionTimeout = null,
+    srvType = dns.consts.nameToQtype('SRV'),
+    aType = dns.consts.nameToQtype('A'),
+    aaaaType = dns.consts.nameToQtype('AAAA');
 delete cachedRecords.a; //don't let V8 try to optimize
+
+dns.setServers = function(list) {
+    dns.platform.name_servers = list.map(function(item) {
+        return {address: item};
+    });
+};
+dns.getServers = function() {
+    return dns.platform.name_servers.map(function(item) {
+        return item.address;
+    });
+};
+
+//todo: figure out how often to reload the servers
 
 function scheduleGarbageCollection(time) {
     if (nextGarbageCollection === 0 || time < nextGarbageCollection) {
@@ -127,8 +144,8 @@ function SRVTarget(result) {
     this.port = result.port || 0;
     this.priority = parseInt(result.priority, 10);
     this.weight = parseInt(result.weight, 10);
-    this.address = '';
-    this.addressFamily = 0;
+    this.address = result.address;
+    this.addressFamily = net.isIP(this.address);
 }
 SRVTarget.prototype.resolve = function(cb) {
     if (typeof cb !== 'function') {
@@ -193,6 +210,80 @@ function wrapTargets(targets) {
     return targets;
 }
 
+function _lookup(hostname, server, callback) {
+    var question, req;
+    question = dns.Question({
+        name: hostname,
+        type: 'SRV'
+    });
+    req = dns.Request({
+        question: question,
+        server: server,
+        timeout: dns.platform.timeout || 5000
+    });
+    req.on('timeout', function() {
+        Log.warn('timed out talking to dns server', {address: server.address});
+        callback(new Error('timeout waiting for dns response'), null);
+    });
+    req.on('message', function(err, answer) {
+        if (err) {
+            callback(err, null);
+            return;
+        }
+        var cache = {};
+        if (answer.additional) {
+            answer.additional.forEach(function(a) {
+                if (a.type === aType || a.type === aaaaType) {
+                    cache[a.name] = a.address;
+                }
+            });
+        }
+        callback(null, answer.answer.filter(function(a) {
+            return a.type === srvType;
+        }).map(function(a) {
+            return {
+                name: a.target,
+                port: a.port,
+                weight: a.weight,
+                priority: a.priority,
+                address: cache[a.target]
+            };
+        }));
+    });
+    req.send();
+}
+
+function lookup(hostname, callback) {
+    var index = 0,
+        servers;
+    if (!dns.platform.ready) {
+        dns.platform.once('ready', function() {
+            setImmediate(function() {
+                lookup(hostname, callback);
+            });
+        });
+        return;
+    }
+    servers = dns.platform.name_servers.slice(0, 3);
+    if (servers.length < 1) {
+        callback(new Error('no dns servers to use'), null);
+        return;
+    }
+    (function call() {
+        Log.debug('looking up SRV record', {hostname: hostname, address: servers[index].address});
+        _lookup(hostname, servers[index], function(err, res) {
+            if (err) {
+                if (servers[index]) {
+                    setImmediate(call);
+                    return;
+                }
+            }
+            callback(err, res);
+        });
+        index++;
+    }())
+}
+
 function getTargets(options) {
     var hostname = options.hostname,
         callback = options.callback,
@@ -212,10 +303,31 @@ function getTargets(options) {
             throw new TypeError('cache must be a number');
         }
         if (cachedRecords.hasOwnProperty(hostname) && cachedRecords[hostname].expire > Date.now()) {
+            Log.debug('resolved SRV record from cache', {
+                hostname: hostname
+            });
             callback(null, (onlyFirst ? (cachedRecords[hostname].targets[0] || null) : cachedRecords[hostname].targets.slice()));
             return;
         }
     }
+    lookup(hostname, function(err, targets) {
+        if (err) {
+            callback(err, null);
+            return;
+        }
+        wrapTargets(targets);
+        sort(targets);
+
+        if (cache > 0 && targets.length) {
+            cachedRecords[hostname] = {
+                targets: targets,
+                expire: Date.now() + cache
+            };
+            scheduleGarbageCollection(cachedRecords[hostname].expire);
+            targets = targets.slice();
+        }
+        callback(null, (onlyFirst ? (targets[0] || null) : targets));
+    })/*
     dns.resolveSrv(hostname, function(err, targets) {
         if (err || !Array.isArray(targets)) {
             callback(err, null);
@@ -234,7 +346,7 @@ function getTargets(options) {
             targets = targets.slice();
         }
         callback(null, (onlyFirst ? (targets[0] || null) : targets));
-    });
+    });*/
 }
 
 function getRandomTargets(options) {
