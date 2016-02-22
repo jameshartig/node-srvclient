@@ -148,3 +148,11 @@ exports.timeout = function(test) {
     });
     SRVClient.setServers(dnsServers);
 };
+
+exports.nxdomain = function(test) {
+    test.expect(1);
+    SRVClient.getTarget('hey.hey', function(err, target) {
+        test.notEqual(err, null);
+        test.done();
+    });
+};
