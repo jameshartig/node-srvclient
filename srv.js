@@ -211,7 +211,8 @@ function wrapTargets(targets) {
 }
 
 function _lookup(hostname, server, callback) {
-    var question, req;
+    var kv = {hostname: hostname, address: server.address},
+        question, req;
     question = dns.Question({
         name: hostname,
         type: 'SRV'
@@ -222,12 +223,23 @@ function _lookup(hostname, server, callback) {
         timeout: dns.platform.timeout || 5000
     });
     req.on('timeout', function() {
-        Log.warn('timed out talking to dns server', {address: server.address});
+        Log.warn('timed out talking to dns server', kv);
         callback(new Error('timeout waiting for dns response'), null);
     });
     req.on('message', function(err, answer) {
         if (err) {
             callback(err, null);
+            return;
+        }
+        if (answer.header.rcode !== 0) {
+            kv.rcode = answer.header.rcode;
+            Log.debug('got non-zero rcode for request', kv);
+            callback(new Error('DNS server returned error for ' + hostname + ': ' + dns.consts.RCODE_TO_NAME[answer.header.rcode]));
+            return;
+        }
+        if (!answer.answer || answer.answer.length === 0) {
+            Log.debug('got no answers but no error', kv);
+            callback(new Error('DNS server returned no answers for ' + hostname + 'but no error'));
             return;
         }
         var cache = {};
