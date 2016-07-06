@@ -11,7 +11,7 @@ delete cachedRecords.a; //don't let V8 try to optimize
 
 dns.setServers = function(list) {
     dns.platform.name_servers = list.map(function(item) {
-        return {address: item};
+        return { address: item };
     });
 };
 dns.getServers = function() {
@@ -58,6 +58,10 @@ function collectGarbage() {
 
 module.exports.setServers = function(servers) {
     dns.setServers(servers);
+};
+
+module.exports.getServers = function() {
+    return dns.getServers();
 };
 
 //via: http://stackoverflow.com/questions/9716468/is-there-any-function-like-isnumeric-in-javascript-to-validate-numbers

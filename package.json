@@ -9,6 +9,10 @@
   "devDependencies": {
     "nodeunit": "^0.9.1"
   },
+  "dependencies": {
+    "modulelog": "^0.2.2",
+    "native-dns": "^0.7.0"
+  },
   "scripts": {
     "test": "nodeunit tests"
   },
@@ -24,9 +28,5 @@
   ],
   "author": "James Hartig <fastest963@gmail.com>",
   "license": "MIT",
-  "readmeFilename": "README.md",
-  "dependencies": {
-    "modulelog": "^0.2.2",
-    "native-dns": "^0.7.0"
-  }
+  "readmeFilename": "README.md"
 }
