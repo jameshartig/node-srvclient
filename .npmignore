@@ -1,1 +1,4 @@
 .travis.yml
+.vscode
+.gitignore
+.eslintrc
