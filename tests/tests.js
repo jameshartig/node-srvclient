@@ -156,3 +156,22 @@ exports.nxdomain = function(test) {
         test.done();
     });
 };
+
+exports.setPreprocessor = function(test) {
+    SRVClient.setPreprocessor(function(ts) {
+        var newts = [];
+        for (var i = 0; i < ts.length; i++) {
+            if (ts[i].port === 8081) {
+                newts.push(ts[i]);
+            }
+        }
+        return newts;
+    });
+    SRVClient.getRandomTargets(testHostname, function(err, targets) {
+        SRVClient.setPreprocessor(function(t) { return t; });
+        //this should always be last since it has a higher priority
+        test.equal(targets[0].port, 8081);
+        test.equal(targets.length, 1);
+        test.done();
+    });
+};

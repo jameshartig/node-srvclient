@@ -58,3 +58,9 @@ cached for the life of the target.
 
 Resolves the target to an IPv6 address. `callback` is called with `(err, address)`. The result is
 cached for the life of the target.
+
+### srv.setPreprocessor(fn) ###
+
+Sets a function that runs on a list of resolved targets. The function receives an array of
+unsorted targets and must return an array of targets to be sorted. The targets are cached after
+the preprocessor runs and therefore the preprocessor does not run when cache is hit.

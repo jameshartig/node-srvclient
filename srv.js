@@ -6,7 +6,8 @@ var dns = require('native-dns'),
     currentCollectionTimeout = null,
     srvType = dns.consts.nameToQtype('SRV'),
     aType = dns.consts.nameToQtype('A'),
-    aaaaType = dns.consts.nameToQtype('AAAA');
+    aaaaType = dns.consts.nameToQtype('AAAA'),
+    preprocessor = function(t) { return t; };
 delete cachedRecords.a; //don't let V8 try to optimize
 
 dns.setServers = function(list) {
@@ -62,6 +63,13 @@ module.exports.setServers = function(servers) {
 
 module.exports.getServers = function() {
     return dns.getServers();
+};
+
+module.exports.setPreprocessor = function(fn) {
+    if (typeof fn !== 'function') {
+        throw new TypeError('preprocessor must be a function');
+    }
+    preprocessor = fn;
 };
 
 //via: http://stackoverflow.com/questions/9716468/is-there-any-function-like-isnumeric-in-javascript-to-validate-numbers
@@ -332,25 +340,11 @@ function getTargets(options) {
             return;
         }
         wrapTargets(targets);
-        sort(targets);
-
-        if (cache > 0 && targets.length) {
-            cachedRecords[hostname] = {
-                targets: targets,
-                expire: Date.now() + cache
-            };
-            scheduleGarbageCollection(cachedRecords[hostname].expire);
-            targets = targets.slice();
-        }
-        callback(null, (onlyFirst ? (targets[0] || null) : targets));
-    })/*
-    dns.resolveSrv(hostname, function(err, targets) {
-        if (err || !Array.isArray(targets)) {
-            callback(err, null);
+        targets = preprocessor(targets);
+        if (!Array.isArray(targets)) {
+            callback(new Error('preprocessor returned non-array'), null);
             return;
         }
-
-        wrapTargets(targets);
         sort(targets);
 
         if (cache > 0 && targets.length) {
@@ -362,7 +356,7 @@ function getTargets(options) {
             targets = targets.slice();
         }
         callback(null, (onlyFirst ? (targets[0] || null) : targets));
-    });*/
+    });
 }
 
 function getRandomTargets(options) {
@@ -396,7 +390,8 @@ exports.getTargets = function(hostname, cache, callback) {
     return getTargets({
         hostname: hostname,
         cache: cache,
-        callback: callback
+        callback: callback,
+        single: false
     });
 };
 
@@ -421,7 +416,8 @@ exports.getRandomTargets = function(hostname, cache, callback) {
     return getRandomTargets({
         hostname: hostname,
         cache: cache,
-        callback: callback
+        callback: callback,
+        single: false
     });
 };
 
