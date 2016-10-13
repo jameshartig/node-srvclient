@@ -159,6 +159,15 @@ function SRVTarget(result) {
     this.address = result.address;
     this.addressFamily = net.isIP(this.address);
 }
+SRVTarget.prototype.clone = function() {
+    return new SRVTarget({
+        name: this.name,
+        port: this.port,
+        priority: this.priority,
+        weight: this.weight,
+        address: this.address
+    });
+};
 SRVTarget.prototype.resolve = function(cb) {
     if (typeof cb !== 'function') {
         throw new TypeError('callback must be a function');
