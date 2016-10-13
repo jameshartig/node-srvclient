@@ -313,7 +313,8 @@ function getTargets(options) {
         callback = options.callback,
         cache = options.cache || 0,
         onlyFirst = options.single || false,
-        sort = options.sort || sortPriorityWeight;
+        sort = options.sort || sortPriorityWeight,
+        preprocess = options.preprocessor || preprocessor;
     if (typeof callback !== 'function') {
         if (typeof cache === 'function') {
             callback = cache;
@@ -340,7 +341,7 @@ function getTargets(options) {
             return;
         }
         wrapTargets(targets);
-        targets = preprocessor(targets);
+        targets = preprocess(targets);
         if (!Array.isArray(targets)) {
             callback(new Error('preprocessor returned non-array'), null);
             return;
