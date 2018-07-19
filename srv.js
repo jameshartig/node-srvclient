@@ -12,12 +12,13 @@ delete cachedRecords.a; //don't let V8 try to optimize
 
 dns.setServers = function(list) {
     dns.platform.name_servers = list.map(function(item) {
-        return { address: item };
+        var parts = item.split(':');
+        return { address: parts[0], port: ~~parts[1] || 53 };
     });
 };
 dns.getServers = function() {
     return dns.platform.name_servers.map(function(item) {
-        return item.address;
+        return item.address + ':' + (item.port || '53');
     });
 };
 
